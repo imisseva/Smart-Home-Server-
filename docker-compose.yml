@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  # 1. Service Django Server
+  backend:
+    build: ./backend
+    # Chạy migrations và start server
+    command: sh -c "python manage.py migrate --noinput && python manage.py runserver 0.0.0.0:8000"
+    container_name: smarthome_server
+    ports:
+      - "8000:8000" # Mapping port 8000 của máy thật vào container
+    volumes:
+      - ./backend:/app # Mount code để khi bạn sửa code, server tự cập nhật không cần build lại
+    depends_on:
+      - mqtt_broker
+    environment:
+      - MQTT_BROKER_HOST=mqtt_broker
+      - MQTT_BROKER_PORT=1883
+      - DATABASE_URL=${DATABASE_URL}
+  # 2. Service MQTT Broker (Mosquitto) - Dùng để điều khiển thiết bị
+  mqtt_broker:
+    image: eclipse-mosquitto:latest
+    container_name: smarthome_mqtt
+    ports:
+      - "1883:1883" # Port cho ESP32 kết nối
+      - "9001:9001" # Port cho Web socket (nếu cần)
+    volumes:
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_log:/mosquitto/log
+      # Tạo file config đơn giản để cho phép truy cập không cần pass (môi trường dev)
+      - ./mosquitto/config:/mosquitto/config 
+
+volumes:
+  mosquitto_data:
+  mosquitto_log:

@@ -1,0 +1,94 @@
+Hướng dẫn chạy:
+1. Chạy serverr
+    Mở terminal ở thư mục gốc:
+        Bật hệ thống (Chỉ cần cài Docker Desktop trước):
+            docker-compose up --build
+            (Chờ nó chạy xong, thấy server log hiện ra là OK)
+        Khởi tạo Database (Chạy 1 lần duy nhất)( sau này deploy sẽ tự động chạy lệnh này):
+            docker-compose exec web python manage.py migrate 
+        #Tạo user admin (Chạy 1 lần duy nhất):
+            #docker-compose exec web python manage.py createsuperuser
+    Mở trình duyệt vào địa chỉ:
+        http://localhost:8000/admin/  (Đăng nhập bằng user admin đã tạo
+2. Chạy app React Native    
+    Dùng lệnh:
+        npm install (trong thư mục mobile để cài đặt các gói cần thiết) (chỉ chạy 1 lần duy nhất)
+        npx expo start (trong thư mục mobile để khởi động dự án React Native) ( chạy mỗi lần muốn mở app)
+    #Mở app React Native (Mở project React Native và chạy như bình thường)
+        #Lưu ý: Thay đổi IP trong mobile/App.js thành IP của máy tính bạn (xem hướng dẫn trong file)
+        #Trên điện thoại và máy tính phải cùng kết nối một mạng LAN
+        #Sử dụng ứng dụng Expo Go trên điện thoại để chạy app React Native
+        #Quét mã QR được tạo ra khi chạy app React Native
+
+
+Mô hình hệ thống:
+    - Backend: Django + Django REST Framework
+    - Database: PostgreSQL
+    - Frontend Mobile: React Native + Expo
+    - Containerization: Docker + Docker Compose
+
+
+   home_api/
+├── __init__.py
+├── apps.py
+│
+├── models/                 # Data Layer (Định nghĩa bảng)
+│   ├── __init__.py         # Import: from .device import Device
+│   ├── device.py
+│   └── user.py
+│
+├── repositories/           # DAL (Xử lý DB phức tạp)
+│   ├── __init__.py
+│   ├── base_repo.py        # Class cha chứa các hàm chung (Create, Delete...)
+│   └── device_repo.py      # Các query khó của Device
+│
+├── services/               # Business Layer (Nghiệp vụ)
+│   ├── __init__.py
+│   ├── auth_service.py
+│   └── device_service.py   # Logic bật tắt, check AI
+│
+├── api/                    # Interface Layer (Giao tiếp)
+│   ├── __init__.py
+│   ├── urls.py             # Định tuyến
+│   ├── views.py            # Controller
+├── serializers/        # DTO (format json)
+│   │── user_serializer.py 
+│
+└── utils/                  # Tiện ích chung
+    └── mqtt_helper.py
+
+
+mobile
+
+├── App.js                # Entry point
+├── src/
+│   ├── api/              # (Network Layer) Cấu hình Axios
+│   │   ├── client.js     # File cấu hình gốc (Base URL, Timeout)
+│   │   └── endpoints.js  # Danh sách đường dẫn API
+│   │
+│   ├── services/         # (Service Layer) Gọi API, tương ứng với Service bên Backend
+│   │   ├── authService.js
+│   │   └── deviceService.js
+│   │
+│   ├── context/          # (State Management) Quản lý trạng thái toàn cục (User, Token)
+│   │   ├── AuthContext.js
+│   │   └── DeviceContext.js
+│   │
+│   ├── navigation/       # Điều hướng (Stack, Tab)
+│   │   ├── AppNavigator.js
+│   │   └── AuthStack.js
+│   │
+│   ├── screens/          # (View Layer) Màn hình giao diện
+│   │   ├── LoginScreen.js
+│   │   └── HomeScreen.js
+│   │
+│   ├── components/       # UI tái sử dụng (Button, Input, Card)
+│   │   ├── CustomButton.js
+│   │   └── DeviceCard.js
+│   │
+│   ├── utils/            # Hàm tiện ích (Lưu Storage, Format date)
+│   │   └── storage.js
+│   │
+│   └── constants/        # Màu sắc, Font, Config
+│       ├── colors.js
+│       └── config.js
