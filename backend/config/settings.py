@@ -156,9 +156,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Cho phép mọi nguồn truy cập (Môi trường dev)
 CORS_ALLOW_ALL_ORIGINS = True 
 
-# Cấu hình MQTT (Lấy từ biến môi trường trong docker-compose)
-import os
-MQTT_SERVER = os.getenv('MQTT_BROKER_HOST', 'mqtt_broker')
-MQTT_PORT = int(os.getenv('MQTT_BROKER_PORT', 1883))
-MQTT_TOPIC_LIGHT = "home/light"
-MQTT_TOPIC_DOOR = "home/door"
+# Cấu trúc MQTT đã được module device_service.py tự quản lý và đọc trọn vẹn từ .env.
+# Không còn hardcode MQTT topic và port 1883 ở đây nữa.
