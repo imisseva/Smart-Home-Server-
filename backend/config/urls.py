@@ -22,8 +22,8 @@ urlpatterns = [
     path('', api_root, name='api-root'),
     path('admin/', admin.site.urls),
     
-    # Giữ tương thích với API cũ: /api/auth/register và /api/auth/login
-    path('api/', include('core.users.urls')),
+    # Gom tất cả app vào prefix /api
+    path('api/auth/', include('core.users.urls')), # Để vào thẳng các route của user
     path('api/homes/', include('core.homes.urls')),
     path('api/devices/', include('core.devices.urls')),
     path('api/logs/', include('core.logs.urls')),
