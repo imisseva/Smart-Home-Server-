@@ -18,13 +18,16 @@ COPY requirements.txt /app/
 
 # Cài đặt các thư viện Python
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+    pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir gunicorn  # Đảm bảo có gunicorn
 
 # Copy toàn bộ code server vào container
 COPY . /app/
 
-# Mở port 8000 để bên ngoài truy cập
-EXPOSE 8000
+# Render sẽ tự gán PORT qua biến môi trường, EXPOSE chỉ để tham khảo
+EXPOSE 10000
 
-# Default command (có thể override trong docker-compose)
-CMD ["bash", "entrypoint.sh"]
+# Đảm bảo file entrypoint có quyền thực thi
+RUN chmod +x entrypoint.sh
+
+CMD ["./entrypoint.sh"]
