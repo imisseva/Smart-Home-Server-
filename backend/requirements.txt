@@ -8,3 +8,5 @@ psycopg2-binary>=2.9.9
 dj-database-url>=2.1.0
 supabase>=0.0.1
 gradio
+gunicorn>=23.0.0
+whitenoise[brotli]>=6.7.0
