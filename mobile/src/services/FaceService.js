@@ -4,7 +4,7 @@ const FaceService = {
   checkPose: async (image, expected_angle) => {
     try {
       // Vì baseURL đã có sẵn /api, nên hãy dùng đường dẫn tương đối khớp với backend
-      const response = await client.post('auth/check-pose/', {
+      const response = await client.post('/auth/check-pose/', {
         image,
         expected_angle
       });
@@ -31,7 +31,7 @@ const FaceService = {
       });
 
       // Ghi đè Content-Type thành multipart/form-data
-      const response = await client.post('auth/face-register/', formData, {
+      const response = await client.post('/auth/face-register/', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         },
@@ -53,7 +53,7 @@ const FaceService = {
   },
   checkFaceStatus: async (userId) => {
     try {
-      const response = await client.get('auth/face-status/', {
+      const response = await client.get('/auth/face-status/', {
         params: { user_id: userId }
       });
       return response.data;
@@ -65,7 +65,7 @@ const FaceService = {
   // HÀM MỚI: Xóa dữ liệu Face ID
   deleteFaceData: async (userId) => {
     try {
-      const response = await client.delete('auth/face-status/', {
+      const response = await client.delete('/auth/face-status/', {
         data: { user_id: userId }
       });
       return response.data;

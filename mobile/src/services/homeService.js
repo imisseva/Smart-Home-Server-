@@ -7,7 +7,7 @@ const HomeService = {
     try {
       const userSession = await AsyncStorage.getItem('user_session');
       const user = JSON.parse(userSession);
-      const response = await client.get('homes/', {
+      const response = await client.get('/homes/', {
         params: { user_id: user.id }
       });
       return response.data;
@@ -21,7 +21,7 @@ const HomeService = {
     try {
       const userSession = await AsyncStorage.getItem('user_session');
       const user = JSON.parse(userSession);
-      const response = await client.post('homes/create/', {
+      const response = await client.post('/homes/create/', {
         namehome,
         user_id: user.id
       });
@@ -34,7 +34,7 @@ const HomeService = {
   // Tìm homes theo tên
   searchHomes: async (namehome) => {
     try {
-      const response = await client.get('homes/search/', {
+      const response = await client.get('/homes/search/', {
         params: { namehome }
       });
       return response.data;
@@ -48,7 +48,7 @@ const HomeService = {
     try {
       const userSession = await AsyncStorage.getItem('user_session');
       const user = JSON.parse(userSession);
-      const response = await client.post('homes/join/', {
+      const response = await client.post('/homes/join/', {
         home_id: homeId,
         user_id: user.id
       });
@@ -61,7 +61,7 @@ const HomeService = {
   // Lấy danh sách requests của một home
   getHomeRequests: async (homeId, status = 'pending') => {
     try {
-      const response = await client.get('homes/requests/', {
+      const response = await client.get('/homes/requests/', {
         params: { home_id: homeId, status }
       });
       return response.data;
@@ -73,7 +73,7 @@ const HomeService = {
   // Duyệt request
   approveRequest: async (requestId) => {
     try {
-      const response = await client.post('homes/requests/approve/', {
+      const response = await client.post('/homes/requests/approve/', {
         request_id: requestId
       });
       return response.data;
@@ -85,7 +85,7 @@ const HomeService = {
   // Từ chối request
   rejectRequest: async (requestId) => {
     try {
-      const response = await client.post('homes/requests/reject/', {
+      const response = await client.post('/homes/requests/reject/', {
         request_id: requestId
       });
       return response.data;

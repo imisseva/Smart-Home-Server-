@@ -3,7 +3,7 @@ const AuthService = {
   login: async (username, password) => {
     try {
    
-      const response = await client.post('auth/login/', { username, password });
+      const response = await client.post('/auth/login/', { username, password });
       return response.data;
     } catch (error) {
       throw error.response ? error.response.data : { error: 'Lỗi kết nối' };
@@ -12,7 +12,7 @@ const AuthService = {
 
   register: async (userData) => {
     try {
-      const response = await client.post('auth/register/', userData);
+      const response = await client.post('/auth/register/', userData);
       return response.data;
     } catch (error) {
       throw error.response ? error.response.data : { error: 'Lỗi kết nối' };
@@ -21,7 +21,7 @@ const AuthService = {
   updateProfile: async (payload) => {
     try {
       // Dùng chung cấu hình client đã có sẵn base_url và timeout
-      const response = await client.put('auth/profile/update/', payload);
+      const response = await client.put('/auth/profile/update/', payload);
       return response.data; 
     } catch (error) {
       throw error.response ? error.response.data : { error: 'Lỗi kết nối server' };
@@ -37,7 +37,7 @@ const AuthService = {
       });
 
       // API Backend mà lát nữa chúng ta sẽ viết
-      const response = await client.post('auth/face-login/', formData, {
+      const response = await client.post('/auth/face-login/', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       return response.data;

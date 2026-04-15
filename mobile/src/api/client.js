@@ -6,7 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const client = axios.create({
   baseURL: API_URL,
   headers: { 'Content-Type': 'application/json' },
-  timeout: 60000,
+  timeout: 10000,
 });
 
 // Interceptor để thêm user_id vào request nếu cần

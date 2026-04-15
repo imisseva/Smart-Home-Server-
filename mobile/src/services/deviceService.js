@@ -4,7 +4,7 @@ const DeviceService = {
   // Lấy danh sách devices của một home
   getHomeDevices: async (homeId) => {
     try {
-      const response = await client.get('devices/', {
+      const response = await client.get('/devices/', {
         params: { home_id: homeId }
       });
       return response.data;
@@ -16,7 +16,7 @@ const DeviceService = {
   // Bật/tắt device
   toggleDevice: async (deviceId) => {
     try {
-      const response = await client.post('devices/toggle/', {
+      const response = await client.post('/devices/toggle/', {
         device_id: deviceId
       });
       return response.data;
@@ -28,7 +28,7 @@ const DeviceService = {
   // Cập nhật intensity (độ sáng, tốc độ...)
   updateIntensity: async (deviceId, intensity) => {
     try {
-      const response = await client.post('devices/intensity/', {
+      const response = await client.post('/devices/intensity/', {
         device_id: deviceId,
         intensity: parseInt(intensity)
       });

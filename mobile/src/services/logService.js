@@ -5,7 +5,7 @@ const LogService = {
   // Lấy lịch sử truy cập của một home
   getHomeLogs: async (homeId, limit = 50) => {
     try {
-      const response = await client.get('logs/', {
+      const response = await client.get('/logs/', {
         params: { home_id: homeId, limit }
       });
       return response.data;
@@ -19,7 +19,7 @@ const LogService = {
     try {
       const userSession = await AsyncStorage.getItem('user_session');
       const user = JSON.parse(userSession);
-      const response = await client.post('logs/create/', {
+      const response = await client.post('/logs/create/', {
         home_id: homeId,
         user_id: user.id,
         method,

@@ -9,40 +9,80 @@ export default function FaceLoginScreen({ navigation }) {
   const { loginWithFace } = useContext(AuthContext);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isCameraReady, setIsCameraReady] = useState(false);
+  const [isScanActive, setIsScanActive] = useState(true);
 
-  const handleCapture = async () => {
-    if (!cameraRef.current) {
-      Alert.alert("Lỗi", "Không tìm thấy camera.");
-      return;
-    }
+  React.useEffect(() => {
+    let active = true;
+    let timerId;
 
-    setIsProcessing(true);
-
-    try {
-      // 👇 FIX CHÍNH: Delay nhỏ để Android kịp init camera buffer
-      await new Promise(resolve => setTimeout(resolve, 300));
-
-      // 👇 Dùng options tối thiểu nhất có thể
-      const photo = await cameraRef.current.takePictureAsync({ 
-        quality: 0.5,
-      });
-
-      console.log("Chụp thành công:", photo.uri);
-      
-      const result = await loginWithFace(photo.uri);
-
-      if (result.success) {
-        Alert.alert("Thành công", "Nhận diện khuôn mặt thành công!");
-      } else {
-        Alert.alert("Thất bại", result.message);
-        setIsProcessing(false);
+    const continuousScan = async () => {
+      // Loop liên tục nếu camera đã sẵn sàng và cờ quét đang bật
+      while (active && isCameraReady && isScanActive) {
+        try {
+          if (!cameraRef.current) break;
+          
+          // Chụp ngầm 100% không làm chớp UI
+          const photo = await cameraRef.current.takePictureAsync({ 
+            quality: 0.3,
+            base64: false
+          });
+          
+          // Bộ đếm thông minh: Nếu Backend xử lý rỗng thì trả về rất nhanh (<400ms)
+          // Nếu Backend kẹt lại >600ms, nghĩa là đã TÌM THẤY MẶT và đang gửi lên AI.
+          // Lúc này ta lập tức show Loading che màn hình lại!
+          let loadingTimer = setTimeout(() => {
+            if (active) setIsProcessing(true);
+          }, 600);
+          
+          const result = await loginWithFace(photo.uri, true);
+          clearTimeout(loadingTimer);
+          
+          if (result.success) {
+            active = false;
+            setIsScanActive(false);
+            setIsProcessing(false);
+            Alert.alert("Thành công", "Đăng nhập Face ID thành công!");
+            break;
+          } else {
+            const errorMsg = result.message || "";
+            
+            // CHỈ đá ra khi thuật toán MDB / AI đã trích xuất được khuôn mặt rõ ràng
+            // nhưng không trùng với tài khoản nào trong hệ thống.
+            if (errorMsg.includes("Khuôn mặt không khớp") || errorMsg.includes("AI nhận diện ra User nhưng không tồn tại")) {
+               active = false;
+               setIsScanActive(false);
+               setIsProcessing(false);
+               Alert.alert("Thất bại", errorMsg);
+               navigation.goBack();
+               break;
+            } else {
+               // Không tìm thấy mặt, nhắm mắt, hình mờ...
+               // -> Ẩn Loading (nếu lỡ hiện) và im lặng thử lại
+               setIsProcessing(false);
+               await new Promise(res => setTimeout(res, 800));
+            }
+          }
+        } catch (error) {
+          // Lỗi quá trình, nghỉ chút lặp lại ngầm
+          setIsProcessing(false);
+          await new Promise(res => setTimeout(res, 1000));
+        }
       }
-    } catch (error) {
-      console.log("LỖI CAPTURE:", error.message);
-      Alert.alert("Lỗi", error.message || "Quá trình quét bị gián đoạn.");
-      setIsProcessing(false);
+    };
+
+    if (isCameraReady && isScanActive) {
+       // Đợi 1 giây để tay cầm chắc chắn
+       timerId = setTimeout(() => {
+          if (active) continuousScan();
+       }, 1000);
     }
-  };
+
+    return () => { 
+       active = false; 
+       if (timerId) clearTimeout(timerId);
+    };
+  }, [isCameraReady, isScanActive]);
+
 
   if (!permission) return <View />;
   if (!permission.granted) {
@@ -57,7 +97,6 @@ export default function FaceLoginScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      {/* 👇 QUAN TRỌNG: Giữ CameraView LUÔN MOUNTED, chỉ ẩn UI bằng overlay */}
       <View style={styles.cameraContainer}>
         <CameraView
           style={StyleSheet.absoluteFillObject}
@@ -69,36 +108,28 @@ export default function FaceLoginScreen({ navigation }) {
           }}
         />
 
-        {/* Nếu đang xử lý thì che camera bằng overlay thay vì unmount */}
         {isProcessing ? (
           <View style={styles.loadingOverlay}>
-            <ActivityIndicator size="large" color="#00FF00" />
-            <Text style={styles.loadingText}>Đang nhận diện khuôn mặt...</Text>
+            <ActivityIndicator size="large" color="#00FF00" style={{ transform: [{ scale: 1.5 }] }} />
+            <Text style={styles.loadingText}>ĐANG PHÂN TÍCH FACE ID...</Text>
+            <Text style={{ color: '#ccc', marginTop: 10 }}>Đang đối chiếu dữ liệu với máy chủ</Text>
           </View>
         ) : (
           <>
             <View style={styles.overlay}>
-              <Text style={styles.instructionText}>Đưa khuôn mặt vào khung hình</Text>
-              <View style={styles.faceOutline} />
-              {/* Debug: hiện trạng thái camera */}
-              <Text style={{ color: isCameraReady ? '#00FF00' : 'orange', marginTop: 8 }}>
-                {isCameraReady ? '● Camera sẵn sàng' : '● Đang khởi động camera...'}
+              <Text style={styles.instructionText}>
+                Đang tìm kiếm khuôn mặt...
               </Text>
+              <View style={[styles.faceOutline, { borderColor: '#00FF00' }]} />
+              
+              {!isCameraReady && (
+                <Text style={{ color: 'orange', marginTop: 15, fontSize: 16 }}>Đang khởi động camera...</Text>
+              )}
             </View>
 
             <View style={styles.buttonContainer}>
-              <TouchableOpacity
-                style={[styles.captureBtn, !isCameraReady && { opacity: 0.5 }]}
-                onPress={handleCapture}
-                disabled={!isCameraReady}
-              >
-                <Text style={styles.captureBtnText}>
-                  {isCameraReady ? "QUÉT ĐĂNG NHẬP" : "ĐANG KHỞI ĐỘNG..."}
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.cancelBtn} onPress={() => navigation.goBack()}>
-                <Text style={styles.cancelBtnText}>HỦY</Text>
+              <TouchableOpacity style={styles.cancelBtn} onPress={() => { setIsScanActive(false); navigation.goBack(); }}>
+                <Text style={styles.cancelBtnText}>QUAY LẠI TRANG CHỦ</Text>
               </TouchableOpacity>
             </View>
           </>

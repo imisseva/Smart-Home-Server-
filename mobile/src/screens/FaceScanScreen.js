@@ -56,7 +56,7 @@ export default function FaceScanScreen({ route, navigation }) {
   const [isUploading, setIsUploading] = useState(false);
 
   const [isScanning, setIsScanning] = useState(false);
-  const [countdown, setCountdown] = useState(5);
+  const [countdown, setCountdown] = useState(3);
   const [isCapturing, setIsCapturing] = useState(false);
   const [scanError, setScanError] = useState(null);
 
@@ -124,7 +124,7 @@ export default function FaceScanScreen({ route, navigation }) {
 
       if (currentStep < ANGLES.length - 1) {
         setCurrentStep(prev => prev + 1);
-        setCountdown(5);
+        setCountdown(3);
         setIsCapturing(false);
       } else {
         setIsScanning(false);
@@ -157,7 +157,7 @@ export default function FaceScanScreen({ route, navigation }) {
       // Reset lại luồng quét nếu lỗi
       setImages([]);
       setCurrentStep(0);
-      setCountdown(5);
+      setCountdown(3);
     } finally {
       setIsUploading(false);
     }
@@ -242,7 +242,7 @@ export default function FaceScanScreen({ route, navigation }) {
                 style={styles.startBtn}
                 onPress={() => {
                   setScanError(null);
-                  setCountdown(5);
+                  setCountdown(3);
                   setIsScanning(true);
                 }}
               >
@@ -253,7 +253,7 @@ export default function FaceScanScreen({ route, navigation }) {
                 style={styles.cancelBtn}
                 onPress={() => {
                   setIsScanning(false);
-                  setCountdown(5);
+                  setCountdown(3);
                   setCurrentStep(0);
                   setImages([]);
                   setScanError(null);

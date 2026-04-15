@@ -58,8 +58,8 @@ export const AuthProvider = ({ children }) => {
     await AsyncStorage.removeItem('user_session');
   };
   // --- HÀM ĐĂNG NHẬP BẰNG KHUÔN MẶT (MỚI THÊM) ---
-  const loginWithFace = async (imageUri) => {
-    setIsLoading(true);
+  const loginWithFace = async (imageUri, silent = false) => {
+    if (!silent) setIsLoading(true);
     try {
       const result = await AuthService.loginWithFace(imageUri);
       
@@ -71,7 +71,7 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       return { success: false, message: error.error || error.message || "Không nhận diện được khuôn mặt" };
     } finally {
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
     }
   };
 
