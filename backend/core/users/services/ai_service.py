@@ -78,7 +78,9 @@ class AIService:
 
         try:
             for i, img in enumerate(image_files):
-                print(f"  [File {i+1}] name={img.name} | content_type={img.content_type}")
+                file_name = getattr(img, 'name', f'face_{i+1}.jpg')
+                content_type = getattr(img, 'content_type', 'image/jpeg')
+                print(f"  [File {i+1}] name={file_name} | content_type={content_type}")
 
                 # Normalize ảnh trước khi gửi (fix EXIF rotation từ mobile)
                 normalized_bytes = AIService._normalize_image(img)
@@ -149,7 +151,9 @@ class AIService:
         url = f"{AIService.API_AI_EMBEDDING}/extract_single"
 
         try:
-            print(f"  [File] name={image_file.name} | content_type={image_file.content_type}")
+            file_name = getattr(image_file, 'name', 'face.jpg')
+            content_type = getattr(image_file, 'content_type', 'image/jpeg')
+            print(f"  [File] name={file_name} | content_type={content_type}")
 
             # Normalize ảnh trước khi gửi (fix EXIF rotation từ mobile)
             normalized_bytes = AIService._normalize_image(image_file)

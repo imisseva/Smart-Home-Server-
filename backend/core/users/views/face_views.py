@@ -7,6 +7,7 @@ import requests
 from supabase import create_client, Client
 from ..services.ai_service import AIService
 from ..models import FaceUser
+from ..services.face_processor import FaceProcessor
 from ..models import Account  # Chỉnh sửa path nếu cần
 
 SUPABASE_URL = settings.SUPABASE_URL
@@ -25,9 +26,22 @@ class FaceLoginView(APIView):
 
         try:
             # ================================================================
-            # 1. Gọi AI trích xuất vector từ ảnh Mobile gửi lên
+            # [BƯỚC MỚI BỔ SUNG] - BỘ LỌC CỤC BỘ (FAST-FAIL & TARGET CROP)
             # ================================================================
-            login_vector = AIService.extract_single_embedding(face_image)
+            # Quét ảnh góc rộng từ ESP32/Mobile, tìm và cắt khuôn mặt to nhất
+            cropped_face_io = FaceProcessor.get_target_face_and_crop(face_image)
+            
+            if not cropped_face_io:
+                return Response(
+                    {"error": "Không tìm thấy khuôn mặt, vui lòng nhìn thẳng vào camera"}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # ================================================================
+            # 1. Gọi AI trích xuất vector (Lúc này truyền ảnh ĐÃ CẮT vào)
+            # ================================================================
+            # Ảnh truyền vào giờ rất nhẹ và sạch (chỉ có cái mặt)
+            login_vector = AIService.extract_single_embedding(cropped_face_io)
             
             if not login_vector:
                 return Response(
@@ -39,34 +53,26 @@ class FaceLoginView(APIView):
             # 2. So sánh với Database (Face Recognition)
             # ================================================================
             matched_user_id = None
-            matched_avatar_url = "" # <-- THÊM BIẾN NÀY ĐỂ HỨNG AVATAR
+            matched_avatar_url = "" 
             highest_similarity = 0.0
             
-            # Ngưỡng chấp nhận (Threshold). 
-            # Có thể tinh chỉnh từ 0.45 đến 0.7 tùy độ khắt khe của hệ thống
+            # Ngưỡng chấp nhận
             THRESHOLD = 0.45
 
-            # Lấy tất cả user đã đăng ký khuôn mặt (có lưu vector)
             registered_faces = FaceUser.objects.exclude(vector_image__isnull=True)
 
             for face_record in registered_faces:
                 db_vector = face_record.vector_image
-                
-                # Tính độ giống nhau
                 sim_score = AIService.calculate_cosine_similarity(login_vector, db_vector)
                 
-                # Tìm ra người giống nhất
                 if sim_score > highest_similarity:
                     highest_similarity = sim_score
                     if highest_similarity >= THRESHOLD:
-                        # Lấy ID của Account liên kết với FaceUser này
                         matched_user_id = face_record.id_user_id 
-                        # LẤY AVATAR TỪ BẢNG FACEUSER LUÔN
                         matched_avatar_url = face_record.avatar_url 
 
             print(f"Độ giống cao nhất tìm thấy: {highest_similarity}")
 
-            # Nếu không ai vượt qua được điểm Threshold
             if not matched_user_id:
                 return Response(
                     {"error": "Khuôn mặt không khớp với bất kỳ tài khoản nào trong hệ thống"}, 
@@ -74,7 +80,7 @@ class FaceLoginView(APIView):
                 )
 
             # ================================================================
-            # 3. Lấy thông tin User từ Database dựa trên user_id AI tìm được
+            # 3. Lấy thông tin User từ Database
             # ================================================================
             try:
                 account = Account.objects.get(id=matched_user_id)
@@ -87,19 +93,19 @@ class FaceLoginView(APIView):
                         "fullname": account.fullname,
                         "email": account.email,
                         "phone": account.phone,
-                        "avatar_url": matched_avatar_url # <-- TRẢ VỀ BIẾN VỪA LẤY ĐƯỢC
+                        "avatar_url": matched_avatar_url 
                     }
                 }, status=status.HTTP_200_OK)
 
             except Account.DoesNotExist:
                 return Response(
-                    {"error": "Lỗi dữ liệu: AI nhận diện ra User nhưng không tồn tại trong Database"}, 
+                    {"error": "Lỗi dữ liệu: AI nhận diện ra User nhưng không tồn tại"}, 
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
 
         except Exception as e:
             return Response(
-                {"error": f"Lỗi quá trình xử lý đăng nhập bằng khuôn mặt: {str(e)}"}, 
+                {"error": f"Lỗi quá trình xử lý: {str(e)}"}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
@@ -240,25 +246,26 @@ class FacePoseCheckView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # RÀO LẠI BẰNG TRY...EXCEPT ĐỂ CHỐNG SẬP KHI HUGGINGFACE LỖI MẠNG
         try:
-            result = AIService.check_face_pose(image_base64, expected_angle)
+            # SỬ DỤNG BỘ LỌC CỤC BỘ MEDIAPIPE THAY VÌ GỌI API HUGGINGFACE
+            result = FaceProcessor.check_face_pose_local(image_base64, expected_angle)
 
-            if result["valid"]:
+            if result.get("valid"):
                 return Response({
                     "valid": True,
                     "pose": result.get("pose"),
-                    "confidence": result.get("confidence")
+                    "info_log": result.get("info_log"),
+                    "confidence": result.get("confidence", 1.0)
                 }, status=status.HTTP_200_OK)
             else:
                 return Response({
                     "valid": False,
-                    "reason": result.get("reason")
+                    "reason": result.get("reason", "Khuôn mặt sai góc độ"),
+                    "info_log": result.get("info_log")
                 }, status=status.HTTP_200_OK)
                 
         except Exception as e:
-            # Nếu AI Server hoặc HuggingFace bị sập, báo lỗi văn minh về cho Mobile
             return Response({
                 "valid": False,
-                "reason": "Hệ thống AI đang bận hoặc lỗi mạng. Vui lòng thử lại sau."
+                "reason": f"Lỗi bộ màng lọc cục bộ: {str(e)}"
             }, status=status.HTTP_200_OK)

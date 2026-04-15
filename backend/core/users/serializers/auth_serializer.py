@@ -21,8 +21,19 @@ class LoginRequestSerializer(serializers.Serializer):
 
 # 3. Output: Trả về Client
 class UserResponseSerializer(serializers.ModelSerializer):
+    avatar_url = serializers.SerializerMethodField()
+
     class Meta:
         from ..models import Account
         model = Account
         # Trả về cả password để bạn test xem nó có đúng là plain text ko (Thực tế nên bỏ đi)
-        fields = ['id', 'username', 'fullname', 'email', 'phone', 'password']
+        fields = ['id', 'username', 'fullname', 'email', 'phone', 'password', 'avatar_url']
+
+    def get_avatar_url(self, obj):
+        from ..models import FaceUser
+        try:
+            face_user = FaceUser.objects.get(id_user=obj)
+            return face_user.avatar_url
+        except FaceUser.DoesNotExist:
+            return ""
+

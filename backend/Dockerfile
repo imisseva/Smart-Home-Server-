@@ -11,6 +11,8 @@ WORKDIR /app
 # Cài đặt system dependencies (nếu cần)
 RUN apt-get update && apt-get install -y \
     postgresql-client \
+    libgl1 \
+    libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy file thư viện vào trước để tận dụng cache của Docker
@@ -18,16 +20,13 @@ COPY requirements.txt /app/
 
 # Cài đặt các thư viện Python
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt && \
-    pip install --no-cache-dir gunicorn  # Đảm bảo có gunicorn
+    pip install --no-cache-dir -r requirements.txt
 
 # Copy toàn bộ code server vào container
 COPY . /app/
 
-# Render sẽ tự gán PORT qua biến môi trường, EXPOSE chỉ để tham khảo
-EXPOSE 10000
+# Mở port 8000 để bên ngoài truy cập
+EXPOSE 8000
 
-# Đảm bảo file entrypoint có quyền thực thi
-RUN chmod +x entrypoint.sh
-
-CMD ["./entrypoint.sh"]
+# Default command (có thể override trong docker-compose)
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]

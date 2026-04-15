@@ -91,15 +91,11 @@ class ProfileUpdateView(APIView):
 
             account.save()
 
+            output_serializer = UserResponseSerializer(account)
+
             return Response({
                 "message": "Cập nhật hồ sơ thành công",
-                "data": {
-                    "id": account.id,
-                    "username": account.username,
-                    "fullname": account.fullname,
-                    "email": account.email,
-                    "phone": account.phone
-                }
+                "data": output_serializer.data
             }, status=status.HTTP_200_OK)
 
         except Account.DoesNotExist:
