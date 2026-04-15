@@ -1,0 +1,9 @@
+# Đảm bảo shell scripts luôn dùng line ending LF (Unix) khi commit
+# Tránh lỗi "bad interpreter: /bin/bash^M" trong Docker container
+*.sh text eol=lf
+
+# Python files
+*.py text eol=lf
+
+# Các file khác dùng auto
+* text=auto

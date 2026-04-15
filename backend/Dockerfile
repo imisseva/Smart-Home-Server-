@@ -26,11 +26,11 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # Copy toàn bộ code server vào container
 COPY . /app/
 
-# Tạo thư mục staticfiles (WhiteNoise cần)
-RUN python manage.py collectstatic --noinput || true
+# Cấp quyền thực thi cho entrypoint
+RUN chmod +x /app/entrypoint.sh
 
 # Mở port 8000
 EXPOSE 8000
 
-# Dùng Gunicorn thay vì runserver (chuẩn production)
-CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "2", "--timeout", "120"]
+# Dùng entrypoint.sh: migrate → collectstatic → gunicorn
+ENTRYPOINT ["/app/entrypoint.sh"]
