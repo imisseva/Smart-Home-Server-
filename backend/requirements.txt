@@ -1,0 +1,12 @@
+Django>=4.2
+djangorestframework
+requests           # Để gọi API sang Colab
+paho-mqtt          # Để giao tiếp MQTT với ESP32
+django-cors-headers # Để React Native gọi API không bị chặn
+python-dotenv      # Để quản lý biến môi trường
+psycopg2-binary>=2.9.9
+dj-database-url>=2.1.0
+supabase>=0.0.1
+gradio
+gunicorn>=23.0.0
+whitenoise[brotli]>=6.7.0
