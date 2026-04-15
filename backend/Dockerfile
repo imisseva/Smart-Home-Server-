@@ -8,11 +8,12 @@ ENV PYTHONDONTWRITEBYTECODE=1
 # Tạo thư mục làm việc trong container
 WORKDIR /app
 
-# Cài đặt system dependencies (nếu cần)
+# Cài đặt system dependencies (cần thiết cho OpenCV + MediaPipe + psycopg2)
 RUN apt-get update && apt-get install -y \
-    postgresql-client \
     libgl1 \
     libglib2.0-0 \
+    libpq-dev \
+    gcc \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy file thư viện vào trước để tận dụng cache của Docker
@@ -25,8 +26,11 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # Copy toàn bộ code server vào container
 COPY . /app/
 
-# Mở port 8000 để bên ngoài truy cập
+# Tạo thư mục staticfiles (WhiteNoise cần)
+RUN python manage.py collectstatic --noinput || true
+
+# Mở port 8000
 EXPOSE 8000
 
-# Default command (có thể override trong docker-compose)
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# Dùng Gunicorn thay vì runserver (chuẩn production)
+CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "2", "--timeout", "120"]
