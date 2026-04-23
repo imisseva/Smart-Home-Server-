@@ -17,6 +17,8 @@ class Device(models.Model):
     intensity = models.IntegerField(blank=True, null=True)
     passcode = models.CharField(max_length=50, blank=True, null=True)
     mqtt_topic = models.CharField(max_length=255, blank=True, null=True)
+    pin = models.CharField(max_length=50, blank=True, null=True)
+    mac_address = models.CharField(max_length=50, blank=True, null=True)
 
     class Meta:
         managed = True

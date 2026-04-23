@@ -1,16 +1,14 @@
 Django>=4.2
 djangorestframework
-requests           # Để gọi API sang HuggingFace
+requests           # Để gọi API sang Colab
 paho-mqtt          # Để giao tiếp MQTT với ESP32
 django-cors-headers # Để React Native gọi API không bị chặn
 python-dotenv      # Để quản lý biến môi trường
 psycopg2-binary>=2.9.9
 dj-database-url>=2.1.0
+gunicorn>=21.2.0
+whitenoise>=6.5.0
 supabase>=0.0.1
-gradio_client      # Gradio client (check pose)
+gradio
 opencv-python-headless
 mediapipe==0.10.11
-# --- Production ---
-gunicorn           # WSGI server cho Render
-whitenoise>=6.0    # Phục vụ static files không cần nginx
-Pillow             # Xử lý ảnh (ai_service.py dùng PIL)

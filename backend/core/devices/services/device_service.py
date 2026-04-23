@@ -2,6 +2,7 @@ from ..repositories.device_repo import DeviceRepository
 import paho.mqtt.publish as publish
 import ssl
 import os
+import json
 
 
 class DeviceService:
@@ -71,9 +72,15 @@ class DeviceService:
         device_name_lower = device.name.lower() if device.name else ""
 
         if device_type == "DOOR" or "door" in device_name_lower:
-            payload = "OPEN" if device.status else "CLOSE"
+            action_str = "OPEN" if device.status else "CLOSE"
         else:
-            payload = "ON" if device.status else "OFF"
+            action_str = "ON" if device.status else "OFF"
+
+        payload_dict = {
+            "pin": device.pin,
+            "action": action_str
+        }
+        payload = json.dumps(payload_dict)
 
         # 3. Gửi MQTT lên HiveMQ Cloud
         if device.mqtt_topic:
@@ -95,10 +102,16 @@ class DeviceService:
             device.intensity = intensity
             device.save()
 
-            # 2. Gửi MQTT (gửi giá trị số 0-100 hoặc 0-255)
+            # 2. Gửi MQTT (JSON Payload)
+            payload_dict = {
+                "pin": device.pin,
+                "action": "INTENSITY",
+                "value": intensity
+            }
+            payload = json.dumps(payload_dict)
             try:
-                DeviceService._publish(device.mqtt_topic, str(intensity))
-                print(f"[MQTT] Sent Intensity {intensity} to {device.mqtt_topic}")
+                DeviceService._publish(device.mqtt_topic, payload)
+                print(f"[MQTT] Sent Intensity {intensity} to {device.mqtt_topic} (JSON: {payload})")
             except Exception as e:
                 print(f"[MQTT] Error intensity: {e}")
             return device

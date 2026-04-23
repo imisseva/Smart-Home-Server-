@@ -181,14 +181,27 @@ export default function HomeDetailScreen({ route, navigation }) {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{homeName}</Text>
         {userRole === 'admin' ? (
-          <TouchableOpacity onPress={() => { loadRequests(); setShowRequestsModal(true); }} style={styles.notificationButton}>
-            <Ionicons name="notifications-outline" size={26} color="#00E5FF" />
-            {requests.length > 0 && (
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>{requests.length}</Text>
-              </View>
-            )}
-          </TouchableOpacity>
+          <View style={styles.headerActions}>
+            {/* Nút Log khuôn mặt */}
+            <TouchableOpacity
+              onPress={() => navigation.navigate('FaceLog', { homeId, homeName })}
+              style={styles.headerActionButton}
+            >
+              <Ionicons name="shield-checkmark-outline" size={24} color="#00E5FF" />
+            </TouchableOpacity>
+            {/* Nút Thông báo yêu cầu tham gia */}
+            <TouchableOpacity
+              onPress={() => { loadRequests(); setShowRequestsModal(true); }}
+              style={[styles.headerActionButton, { marginLeft: 8 }]}
+            >
+              <Ionicons name="notifications-outline" size={24} color="#00E5FF" />
+              {requests.length > 0 && (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>{requests.length}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          </View>
         ) : (
           <View style={styles.placeholder} />
         )}
@@ -382,6 +395,8 @@ const styles = StyleSheet.create({
   intensityButton: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8, backgroundColor: 'rgba(0, 229, 255, 0.1)', borderRadius: 10, borderWidth: 1, borderColor: 'rgba(0, 229, 255, 0.3)' },
   intensityButtonText: { marginLeft: 8, color: '#00E5FF', fontWeight: 'bold' },
 
+  headerActions: { flexDirection: 'row', alignItems: 'center' },
+  headerActionButton: { padding: 8, backgroundColor: 'rgba(0, 229, 255, 0.1)', borderRadius: 12, position: 'relative' },
   notificationButton: { padding: 8, backgroundColor: 'rgba(0, 229, 255, 0.1)', borderRadius: 12, position: 'relative' },
   badge: { position: 'absolute', top: -5, right: -5, backgroundColor: '#FF3B30', borderRadius: 10, minWidth: 20, height: 20, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 5, borderWidth: 1, borderColor: '#0A1128' },
   badgeText: { color: '#fff', fontSize: 12, fontWeight: 'bold' },

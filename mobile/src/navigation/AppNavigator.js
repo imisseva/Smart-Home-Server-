@@ -2,7 +2,6 @@ import React, { useContext } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import FaceManagementScreen from '../screens/FaceManagementScreen';
 import { AuthContext } from '../context/AuthContext';
 import LoginScreen from '../screens/LoginScreen';
 import HomeScreen from '../screens/HomeScreen';
@@ -12,6 +11,9 @@ import JoinHomeScreen from '../screens/JoinHomeScreen';
 import FaceScanScreen from '../screens/FaceScanScreen';
 import EditProfileScreen from '../screens/EditProfileScreen';
 import FaceLoginScreen from '../screens/FaceLoginScreen';
+import FaceManagementScreen from '../screens/FaceManagementScreen';
+import FaceLogScreen from '../screens/FaceLogScreen';
+
 const Stack = createNativeStackNavigator();
 
 export default function AppNavigator() {
@@ -57,8 +59,8 @@ export default function AppNavigator() {
               options={{
                 headerShown: false,
                 title: 'Chỉnh sửa hồ sơ'
-              }} />
-            {/* ĐÃ THÊM MÀN HÌNH QUÉT KHUÔN MẶT VÀO ĐÂY */}
+              }}
+            />
             <Stack.Screen
               name="FaceManagement"
               component={FaceManagementScreen}
@@ -70,6 +72,11 @@ export default function AppNavigator() {
             <Stack.Screen
               name="FaceScanScreen"
               component={FaceScanScreen}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="FaceLog"
+              component={FaceLogScreen}
               options={{ headerShown: false }}
             />
           </>
@@ -84,7 +91,7 @@ export default function AppNavigator() {
             <Stack.Screen
               name="FaceLogin"
               component={FaceLoginScreen}
-              options={{ headerShown: false }} // Ẩn header cho ngầu
+              options={{ headerShown: false }}
             />
           </>
         )}
