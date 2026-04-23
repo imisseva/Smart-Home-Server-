@@ -9,26 +9,35 @@ from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 
 class FaceProcessor:
-    # Khởi tạo MediaPipe Face Detection
-    mp_face_detection = mp.solutions.face_detection
-    detector = mp_face_detection.FaceDetection(model_selection=1, min_detection_confidence=0.5)
-
-    # Khởi tạo MediaPipe Face Landmarker cho tính toán góc mặt
+    # Lazy-load: Không load model lúc startup để tiết kiệm RAM trên Render free tier
+    _detector = None
+    _landmarker = None
     MODEL_PATH = os.path.join(os.path.dirname(__file__), '..', 'face_landmarker.task')
-    
-    if os.path.exists(MODEL_PATH):
-        _base_options = python.BaseOptions(model_asset_path=MODEL_PATH)
-        _options = vision.FaceLandmarkerOptions(
-            base_options=_base_options,
-            output_face_blendshapes=False,
-            output_facial_transformation_matrixes=True,
-            num_faces=1,
-        )
-        landmarker = vision.FaceLandmarker.create_from_options(_options)
-        print("[head_pose] Model loaded: " + MODEL_PATH)
-    else:
-        landmarker = None
-        print(f"[!] Không tìm thấy file model MediaPipe: {MODEL_PATH}")
+
+    @classmethod
+    def _get_detector(cls):
+        if cls._detector is None:
+            mp_face_detection = mp.solutions.face_detection
+            cls._detector = mp_face_detection.FaceDetection(model_selection=1, min_detection_confidence=0.5)
+            print("[FaceProcessor] Face Detection model loaded (lazy)")
+        return cls._detector
+
+    @classmethod
+    def _get_landmarker(cls):
+        if cls._landmarker is None:
+            if os.path.exists(cls.MODEL_PATH):
+                _base_options = python.BaseOptions(model_asset_path=cls.MODEL_PATH)
+                _options = vision.FaceLandmarkerOptions(
+                    base_options=_base_options,
+                    output_face_blendshapes=False,
+                    output_facial_transformation_matrixes=True,
+                    num_faces=1,
+                )
+                cls._landmarker = vision.FaceLandmarker.create_from_options(_options)
+                print("[head_pose] Model loaded (lazy): " + cls.MODEL_PATH)
+            else:
+                print(f"[!] Không tìm thấy file model MediaPipe: {cls.MODEL_PATH}")
+        return cls._landmarker
 
 
     @staticmethod
@@ -44,7 +53,7 @@ class FaceProcessor:
         h, w, _ = img.shape
         # Chuyển sang RGB cho MediaPipe
         rgb_img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        results = FaceProcessor.detector.process(rgb_img)
+        results = FaceProcessor._get_detector().process(rgb_img)
 
         if not results.detections:
             return None # Không thấy mặt nào
@@ -110,7 +119,7 @@ class FaceProcessor:
         """
         Kiểm tra góc xoay của khuôn mặt bằng MediaPipe Tasks Vision cục bộ.
         """
-        if getattr(FaceProcessor, 'landmarker', None) is None:
+        if FaceProcessor._get_landmarker() is None:
              return {"valid": False, "reason": "Lỗi hệ thống: Chưa load model MediaPipe Face Landmarker."}
 
         try:
@@ -128,7 +137,7 @@ class FaceProcessor:
             
             # 2. Extract Transform Matrix bằng Face Landmarker
             mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_img)
-            results = FaceProcessor.landmarker.detect(mp_image)
+            results = FaceProcessor._get_landmarker().detect(mp_image)
             
             if not results.face_landmarks:
                 return {"valid": False, "reason": "Không tìm thấy khuôn mặt nào trong khung hình"}

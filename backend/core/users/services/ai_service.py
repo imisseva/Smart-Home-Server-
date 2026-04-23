@@ -1,4 +1,4 @@
-from gradio_client import Client
+# from gradio_client import Client (Được dời xuống lazy-load)
 from PIL import Image, ImageOps
 import requests
 import io
@@ -14,8 +14,15 @@ class AIService:
         "down": "Cui Xuong",
     }
 
-    # Khởi tạo client trỏ thẳng vào tên Space check pose
-    _client = Client("aiwho/posedetection")
+    # Lazy-load: Chỉ khởi tạo client khi thực sự được gọi
+    _client = None
+
+    @classmethod
+    def _get_client(cls):
+        if cls._client is None:
+            from gradio_client import Client
+            cls._client = Client("aiwho/posedetection")
+        return cls._client
 
     # URL của API AI để trích xuất embedding từ ảnh
     API_AI_EMBEDDING = "https://aiwho-embeddingresnet34.hf.space"
@@ -255,7 +262,7 @@ class AIService:
                 image_base64 = f"data:image/jpeg;base64,{image_base64}"
             print(f"  [base64] Độ dài chuỗi sau chuẩn hóa: {len(image_base64)} ký tự")
 
-            client = AIService._client
+            client = AIService._get_client()
 
             # 2. Lấy expected_label trước khi gọi AI (để log rõ)
             expected_label = AIService.POSE_MAP.get(expected_angle)
